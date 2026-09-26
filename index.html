@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Конструктор горных пород</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* === КАРТИНКИ: меняются в одном месте === */
+  :root {
+    --img-idle:    url('lui2.png'); /* до создания */
+    --img-success: url('lui3.png'); /* успех */
+    --img-fail:    url('lui4.png'); /* неудача */
+    
+    --strip-img:   url('lui5.png'); /* горизонтальная полоса внизу */
+  }
+
+  body {
+    font-family: 'Oswald', 'Segoe UI', Arial, sans-serif;
+    background: #3d2c17;
+    color: #f5e6d3;
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+    font-weight: 400;
+    letter-spacing: .3px;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    right: -80px;
+    bottom: -80px;
+    width: 500px;
+    height: 500px;
+    background-image: var(--hero-img);
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: .06;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ШАПКА */
+  .hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto 22px;
+    padding: 14px 20px;
+    background: rgba(0,0,0,.35);
+    border: 2px solid #8b6b3e;
+    border-radius: 16px;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background-image: var(--hero-img);
+    background-size: cover;
+    background-position: center;
+    border: 3px solid #ffd9a0;
+    box-shadow: 0 0 20px rgba(255,217,160,.4);
+    flex-shrink: 0;
+  }
+  .hero-text h1 {
+    font-size: 1.7em;
+    color: #ffd9a0;
+    text-shadow: 2px 2px 6px rgba(0,0,0,.6);
+    margin-bottom: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .hero-text p {
+    opacity: .8;
+    font-style: italic;
+    font-size: .9em;
+    font-weight: 300;
+  }
+  @media (max-width: 600px) {
+    .hero { flex-direction: column; text-align: center; }
+    .hero-avatar { width: 70px; height: 70px; }
+    .hero-text h1 { font-size: 1.3em; }
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1.1fr 1.2fr 1fr;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+  @media (max-width: 950px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: rgba(0,0,0,.35);
+    border: 2px solid #8b6b3e;
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .panel h2 {
+    font-size: 1em;
+    margin-bottom: 10px;
+    color: #ffd9a0;
+    border-bottom: 1px dashed #8b6b3e;
+    padding-bottom: 6px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 500;
+  }
+
+  .minerals {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .mineral {
+    background: #4a3520;
+    border: 2px solid #9c7a48;
+    border-radius: 10px;
+    padding: 8px 6px;
+    text-align: center;
+    cursor: grab;
+    transition: transform .15s, border-color .15s;
+    user-select: none;
+    position: relative;
+  }
+  .mineral:hover {
+    transform: translateY(-3px);
+    border-color: #ffd9a0;
+  }
+  .mineral .icon { font-size: 1.6em; display: block; }
+  .mineral .name {
+    font-size: .8em;
+    font-weight: 500;
+    margin-top: 2px;
+    letter-spacing: .3px;
+  }
+  .mineral .tooltip {
+    display: none;
+    position: absolute;
+    bottom: 105%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2b1d0e;
+    border: 1px solid #ffd9a0;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: .7em;
+    white-space: nowrap;
+    z-index: 10;
+    box-shadow: 0 4px 10px rgba(0,0,0,.6);
+    color: #ffd9a0;
+    font-weight: 300;
+  }
+  .mineral:hover .tooltip { display: block; }
+
+  .crucible {
+    min-height: 220px;
+    background: #2b1d0e;
+    border: 3px dashed #c9a26a;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+    transition: background .3s, border-color .3s;
+  }
+  .crucible.hover {
+    border-color: #ffd9a0;
+    background: #3a2814;
+  }
+  .crucible .hint {
+    opacity: .6;
+    font-style: italic;
+    text-align: center;
+    font-size: .85em;
+    font-weight: 300;
+  }
+  .slot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  .chip {
+    background: #4a3520;
+    border: 2px solid #ffd9a0;
+    border-radius: 20px;
+    padding: 5px 11px;
+    font-size: .8em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: pop .25s ease;
+    font-weight: 400;
+  }
+  @keyframes pop {
+    0% { transform: scale(.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .chip .remove {
+    cursor: pointer;
+    color: #ff9a9a;
+    font-weight: bold;
+    font-size: 1.1em;
+    line-height: 1;
+  }
+  .chip .remove:hover { color: #fff; }
+
+  .buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  button {
+    font-family: 'Oswald', sans-serif;
+    font-size: .9em;
+    padding: 9px 16px;
+    border-radius: 10px;
+    border: 2px solid #ffd9a0;
+    background: #8b5a20;
+    color: #fff8ec;
+    cursor: pointer;
+    font-weight: 500;
+    transition: transform .15s;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  button:hover { transform: translateY(-2px); }
+  button.secondary {
+    background: #2b1d0e;
+  }
+  button.hint-btn {
+    background: #b8860b;
+  }
+
+  /* ПРАВАЯ КОЛОНКА */
+  .result-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .result {
+    text-align: center;
+    padding: 14px;
+    border-radius: 12px;
+    min-height: 170px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all .4s;
+    background: rgba(0,0,0,.25);
+  }
+  .result.empty { opacity: .55; font-style: italic; }
+  .result.success {
+    background: rgba(120,255,150,.15);
+    border: 2px solid #7dff9a;
+  }
+  .result.fail {
+    background: rgba(255,100,100,.12);
+    border: 2px solid #ff7d7d;
+  }
+  .result.already {
+    background: rgba(150,200,255,.12);
+    border: 2px solid #7db8ff;
+  }
+  .result .rock-icon { font-size: 2.4em; }
+  .result .rock-name {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #ffd9a0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .result .rock-desc {
+    font-size: .78em;
+    opacity: .85;
+    max-width: 240px;
+    font-weight: 300;
+  }
+  .result .rock-type {
+    font-size: .65em;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(0,0,0,.4);
+    font-weight: 500;
+  }
+  .type-магматическая { color: #ff9a7d; }
+  .type-осадочная { color: #ffd97d; }
+  .type-метаморфическая { color: #7db8ff; }
+
+  /* === ПЕРСОНАЖ С МЕНЯЮЩЕЙСЯ КАРТИНКОЙ === */
+  .character-box {
+    position: relative;
+    background-color: rgba(0,0,0,.25);
+    border: 2px solid #8b6b3e;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    background-image: var(--img-idle);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center top;
+    transition: background-image .3s, border-color .3s;
+    overflow: hidden;
+  }
+  .character-box.success {
+    background-image: var(--img-success);
+    border-color: #7dff9a;
+  }
+  .character-box.fail {
+    background-image: var(--img-fail);
+    border-color: #ff7d7d;
+  }
+  .character-box.already {
+    border-color: #7db8ff;
+  }
+
+  .character-box .char-caption {
+    background: rgba(43, 29, 14, .85);
+    border: 1px solid #ffd9a0;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: .78em;
+    color: #ffd9a0;
+    max-width: 90%;
+    line-height: 1.3;
+    font-weight: 300;
+  }
+
+  /* === ОФОРМЛЕНИЕ ДОКУМЕНТА === */
+  .doc-panel {
+    background: rgba(255, 240, 210, .08);
+    border: 2px solid #c9a26a;
+    border-radius: 12px;
+    padding: 14px;
+    position: relative;
+  }
+  .doc-panel::before {
+    content: '';
+    position: absolute;
+    top: 6px; left: 6px; right: 6px;
+    height: 2px;
+    background: #c9a26a;
+    opacity: .5;
+  }
+  .doc-panel h3 {
+    font-size: .85em;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #ffd9a0;
+    text-align: center;
+    margin-bottom: 12px;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+  .doc-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    font-size: .82em;
+    padding: 6px 0;
+    border-bottom: 1px dotted rgba(201, 162, 106, .5);
+  }
+  .doc-field:last-child { border-bottom: none; }
+  .doc-field .label {
+    color: #ffd9a0;
+    opacity: .85;
+    flex-shrink: 0;
+    font-weight: 400;
+    letter-spacing: .5px;
+  }
+  .doc-field .value {
+    text-align: right;
+    font-weight: 500;
+    color: #fff8ec;
+    word-break: break-word;
+  }
+  .doc-field .value.empty-val {
+    opacity: .35;
+    font-style: italic;
+    font-weight: 300;
+  }
+  .doc-stamp {
+    margin-top: 10px;
+    text-align: center;
+    font-size: .7em;
+    color: #ffd9a0;
+    opacity: .55;
+    letter-spacing: 1.5px;
+    font-weight: 300;
+    text-transform: uppercase;
+  }
+
+  .progress {
+    text-align: center;
+    margin-top: 10px;
+    font-size: .8em;
+    opacity: .85;
+    font-weight: 400;
+    letter-spacing: .5px;
+  }
+  .progress .bar {
+    height: 8px;
+    background: rgba(0,0,0,.5);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .progress .fill {
+    height: 100%;
+    background: #7dff9a;
+    width: 0%;
+    transition: width .4s;
+  }
+
+  .legend {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    font-size: .68em;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    font-weight: 300;
+  }
+  .legend span::before {
+    content: '●';
+    margin-right: 3px;
+  }
+  .legend .mag::before { color: #ff9a7d; }
+  .legend .sed::before { color: #ffd97d; }
+  .legend .met::before { color: #7db8ff; }
+
+  /* === НОВЫЙ ГОРИЗОНТАЛЬНЫЙ БЛОК С КАРТИНКОЙ LUI5 === */
+  .strip-box {
+    margin-top: 14px;
+    width: 100%;
+    height: 232px;
+    background-color: #2b1d0e;
+    background-image: var(--strip-img);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: 2px solid #8b6b3e;
+    border-radius: 12px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 8px;
+    transition: border-color .3s;
+  }
+  .strip-box .strip-caption {
+    background: rgba(43, 29, 14, .85);
+    border: 1px solid #ffd9a0;
+    border-radius: 10px;
+    padding: 4px 12px;
+    font-size: .72em;
+    color: #ffd9a0;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  .hint-box {
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(255, 217, 160, .1);
+    border: 1px dashed #ffd9a0;
+    border-radius: 10px;
+    font-size: .8em;
+    min-height: 40px;
+    display: none;
+    font-weight: 300;
+  }
+  .hint-box.show { display: block; animation: pop .3s ease; }
+  .hint-box .hint-title {
+    color: #ffd9a0;
+    font-weight: 500;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: .9em;
+  }
+  .hint-box .hint-text { opacity: .9; line-height: 1.4; }
+
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #2b1d0e;
+    border: 2px solid #ffd9a0;
+    border-radius: 14px;
+    padding: 20px;
+    max-width: 700px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .modal h3 {
+    color: #ffd9a0;
+    margin-bottom: 14px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 500;
+  }
+  .rocks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .rock-card {
+    background: rgba(0,0,0,.4);
+    border: 1px solid #8b6b3e;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: .78em;
+  }
+  .rock-card.done {
+    border-color: #7dff9a;
+    background: rgba(120,255,150,.08);
+  }
+  .rock-card .rc-title {
+    font-weight: 500;
+    color: #ffd9a0;
+    margin-bottom: 4px;
+    letter-spacing: .5px;
+  }
+  .rock-card .rc-type {
+    font-size: .85em;
+    opacity: .7;
+    margin-bottom: 6px;
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .rock-card .rc-recipe { opacity: .9; line-height: 1.4; font-weight: 300; }
+</style>
+</head>
+<body>
+
+<!-- ШАПКА -->
+<div class="hero">
+
+  <div class="hero-text">
+    <h1>⛏️ Конструктор горных пород</h1>
+    <p>Перетащи минералы в тигель — узнай, какая порода получится!</p>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- МИНЕРАЛЫ -->
+  <div class="panel">
+    <h2>💎 Минералы</h2>
+    <div class="minerals" id="minerals"></div>
+  </div>
+
+  <!-- ТИГЕЛЬ -->
+  <div class="panel">
+    <h2>🔥 Тигель</h2>
+    <div class="crucible" id="crucible">
+      <div class="hint" id="crucibleHint">Перетащи сюда минералы<br>(или кликни по ним)</div>
+      <div class="slot" id="slot"></div>
+    </div>
+    <div class="buttons">
+      <button id="btnCreate">Создать породу</button>
+      <button id="btnHint" class="hint-btn">💡 Подсказка</button>
+      <button id="btnClear" class="secondary">Очистить</button>
+    </div>
+    <div class="hint-box" id="hintBox">
+      <div class="hint-title">💡 Подсказка:</div>
+      <div class="hint-text" id="hintText"></div>
+    </div>
+    <div class="buttons" style="margin-top:8px;">
+      <button id="btnRecipes" class="secondary" style="font-size:.78em;padding:6px 12px;">📖 Все рецепты</button>
+    </div>
+    <div class="progress">
+      Открыто пород: <span id="score">0</span> / <span id="total">0</span>
+      <div class="bar"><div class="fill" id="fill"></div></div>
+    </div>
+    <div class="legend">
+      <span class="mag">магматические</span>
+      <span class="sed">осадочные</span>
+      <span class="met">метаморфические</span>
+    </div>
+
+    <!-- ГОРИЗОНТАЛЬНЫЙ БЛОК С КАРТИНКОЙ LUI5 -->
+    <div class="strip-box">
+   
+    </div>
+  </div>
+
+  <!-- ПРАВАЯ КОЛОНКА -->
+  <div class="result-panel">
+    <h2 style="text-align:center;color:#ffd9a0;font-size:1em;border-bottom:1px dashed #8b6b3e;padding-bottom:6px;">🪨 Результат</h2>
+
+    <!-- Результат -->
+    <div class="result empty" id="result">
+      Здесь появится горная порода…
+    </div>
+
+    <!-- Персонаж с меняющейся картинкой -->
+    <div class="character-box" id="characterBox">
+      <div class="char-caption" id="charCaption">Твой помощник-геолог ждёт открытий!</div>
+    </div>
+
+    <!-- Оформление документа -->
+    <div class="doc-panel">
+      <h3>📋 Оформление документа</h3>
+      <div class="doc-field">
+        <span class="label">Порода:</span>
+        <span class="value empty-val" id="docRock">— не определена —</span>
+      </div>
+      <div class="doc-field">
+        <span class="label">Тип:</span>
+        <span class="value empty-val" id="docType">—</span>
+      </div>
+      <div class="doc-field">
+        <span class="label">Состав:</span>
+        <span class="value empty-val" id="docRecipe">—</span>
+      </div>
+      <div class="doc-field">
+        <span class="label">Твёрдость:</span>
+        <span class="value empty-val" id="docHard">—</span>
+      </div>
+      <div class="doc-field">
+        <span class="label">Цвет черты:</span>
+        <span class="value empty-val" id="docStreak">—</span>
+      </div>
+      <div class="doc-field">
+        <span class="label">Кислота:</span>
+        <span class="value empty-val" id="docAcid">—</span>
+      </div>
+      <div class="doc-field">
+        <span class="label">Магнит:</span>
+        <span class="value empty-val" id="docMag">—</span>
+      </div>
+      <div class="doc-stamp">Полевой дневник геолога</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- МОДАЛКА РЕЦЕПТОВ -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>📖 Все рецепты пород</h3>
+    <div class="rocks-grid" id="rocksGrid"></div>
+    <div class="buttons">
+      <button class="secondary" id="btnCloseModal">Закрыть</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ МИНЕРАЛЫ ============ */
+
+const minerals = [
+  { id: 'quartz',    name: 'Кварц',         icon: '🔷' },
+  { id: 'feldspar',  name: 'Полевой шпат',  icon: '⚪' },
+  { id: 'mica',      name: 'Слюда',         icon: '⏺' },
+  { id: 'olivine',   name: 'Оливин',        icon: '🟢' },
+  { id: 'pyroxene',  name: 'Пироксен',      icon: '⬛' },
+  { id: 'amphibole', name: 'Амфибол',       icon: '🟫' },
+  { id: 'calcite',   name: 'Кальцит',       icon: '🥚' },
+  { id: 'gypsum',    name: 'Гипс',          icon: '⚪' },
+  { id: 'clay',      name: 'Глина',         icon: '🟤' },
+  { id: 'magnetite', name: 'Магнетит',      icon: '🧲' },
+  { id: 'hematite',  name: 'Гематит',       icon: '🟥' },
+  { id: 'graphite',  name: 'Графит',        icon: '✏️' },
+];
+
+/* ============ 12 ПОРОД ============ */
+
+const recipes = [
+  { rock: 'Гранит',    icon: '🗿', type: 'магматическая',
+    desc: 'Кварц + полевой шпат + слюда. Основа материков.',
+    needs: ['quartz', 'feldspar', 'mica'],
+    hardness: '6–7', streak: 'белая, серая', acid: 'не шипит', magnet: 'нет' },
+
+  { rock: 'Базальт',   icon: '🌑', type: 'магматическая',
+    desc: 'Тёмная плотная порода из оливина и пироксена.',
+    needs: ['olivine', 'pyroxene'],
+    hardness: '5–6', streak: 'тёмно-серая', acid: 'не шипит', magnet: 'слабо' },
+
+  { rock: 'Габбро',    icon: '⚫', type: 'магматическая',
+    desc: 'Тёмная глубинная порода из пироксена и амфибола.',
+    needs: ['pyroxene', 'amphibole'],
+    hardness: '6', streak: 'серая', acid: 'не шипит', magnet: 'нет' },
+
+  { rock: 'Обсидиан',  icon: '🖤', type: 'магматическая',
+    desc: 'Вулканическое стекло. Быстро застывшая магма.',
+    needs: ['quartz', 'feldspar'],
+    hardness: '5–6', streak: 'белая', acid: 'не шипит', magnet: 'нет' },
+
+  { rock: 'Известняк', icon: '🐚', type: 'осадочная',
+    desc: 'Состоит из кальцита. Шипит от кислоты.',
+    needs: ['calcite'],
+    hardness: '3', streak: 'белая', acid: 'шипит!', magnet: 'нет' },
+
+  { rock: 'Алебастр',  icon: '🕯️', type: 'осадочная',
+    desc: 'Белая мягкая порода из гипса. Для скульптур.',
+    needs: ['gypsum'],
+    hardness: '2', streak: 'белая', acid: 'не шипит', magnet: 'нет' },
+
+  { rock: 'Песчаник',  icon: '🏜️', type: 'осадочная',
+    desc: 'Спрессованный кварцевый песок.',
+    needs: ['quartz', 'quartz'],
+    hardness: '6–7', streak: 'белая', acid: 'не шипит', magnet: 'нет' },
+
+  { rock: 'Глинистый сланец', icon: '📘', type: 'осадочная',
+    desc: 'Уплотнённая глина. Колется на плитки.',
+    needs: ['clay'],
+    hardness: '2–3', streak: 'серая', acid: 'не шипит', magnet: 'нет' },
+
+  { rock: 'Мрамор',    icon: '🏛️', type: 'метаморфическая',
+    desc: 'Известняк под давлением. Отсюда скульптуры.',
+    needs: ['calcite', 'calcite'],
+    hardness: '3–4', streak: 'белая', acid: 'шипит!', magnet: 'нет' },
+
+  { rock: 'Кварцит',   icon: '💠', type: 'метаморфическая',
+    desc: 'Сжатый песчаник. Очень твёрдый.',
+    needs: ['quartz', 'quartz', 'quartz'],
+    hardness: '7', streak: 'белая', acid: 'не шипит', magnet: 'нет' },
+
+  { rock: 'Гнейс',     icon: '📗', type: 'метаморфическая',
+    desc: '«Полосатая» порода из гранита под давлением.',
+    needs: ['quartz', 'feldspar', 'mica', 'mica'],
+    hardness: '6–7', streak: 'серая', acid: 'не шипит', magnet: 'нет' },
+
+  { rock: 'Железная руда', icon: '🧲', type: 'метаморфическая',
+    desc: 'Порода из магнетита и гематита. Магнитная!',
+    needs: ['magnetite', 'hematite'],
+    hardness: '5–6', streak: 'красная', acid: 'не шипит', magnet: 'ДА!' },
+];
+
+/* ============ СОСТОЯНИЕ ============ */
+
+let selected = [];
+let collected = new Set();
+
+/* ============ DOM ============ */
+
+const $minerals    = document.getElementById('minerals');
+const $crucible    = document.getElementById('crucible');
+const $slot        = document.getElementById('slot');
+const $hint        = document.getElementById('crucibleHint');
+const $result      = document.getElementById('result');
+const $score       = document.getElementById('score');
+const $total       = document.getElementById('total');
+const $fill        = document.getElementById('fill');
+const $hintBox     = document.getElementById('hintBox');
+const $hintText    = document.getElementById('hintText');
+const $modalBg     = document.getElementById('modalBg');
+const $rocksGrid   = document.getElementById('rocksGrid');
+const $charBox     = document.getElementById('characterBox');
+const $charCaption = document.getElementById('charCaption');
+
+/* ============ РЕНДЕР МИНЕРАЛОВ ============ */
+
+minerals.forEach(m => {
+  const usedIn = recipes
+    .filter(r => r.needs.includes(m.id))
+    .map(r => r.rock)
+    .join(', ');
+
+  const el = document.createElement('div');
+  el.className = 'mineral';
+  el.draggable = true;
+  el.innerHTML = `
+    <span class="icon">${m.icon}</span>
+    <div class="name">${m.name}</div>
+    <div class="tooltip">Входит в: ${usedIn || '—'}</div>
+  `;
+
+  el.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/plain', m.id);
+  });
+  el.addEventListener('click', () => addMineral(m.id));
+
+  $minerals.appendChild(el);
+});
+
+/* ============ DRAG & DROP ============ */
+
+$crucible.addEventListener('dragover', e => {
+  e.preventDefault();
+  $crucible.classList.add('hover');
+});
+$crucible.addEventListener('dragleave', () => {
+  $crucible.classList.remove('hover');
+});
+$crucible.addEventListener('drop', e => {
+  e.preventDefault();
+  $crucible.classList.remove('hover');
+  const id = e.dataTransfer.getData('text/plain');
+  if (id) addMineral(id);
+});
+
+/* ============ ЛОГИКА ============ */
+
+function addMineral(id) {
+  selected.push(id);
+  renderSlot();
+  $result.className = 'result empty';
+  $result.textContent = 'Нажми «Создать породу»…';
+  $hintBox.classList.remove('show');
+}
+
+function removeMineral(index) {
+  selected.splice(index, 1);
+  renderSlot();
+}
+
+function renderSlot() {
+  $slot.innerHTML = '';
+  if (selected.length === 0) {
+    $hint.style.display = 'block';
+    return;
+  }
+  $hint.style.display = 'none';
+
+  selected.forEach((id, i) => {
+    const m = minerals.find(x => x.id === id);
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.innerHTML = `<span>${m.icon} ${m.name}</span><span class="remove">×</span>`;
+    chip.querySelector('.remove').addEventListener('click', () => removeMineral(i));
+    $slot.appendChild(chip);
+  });
+}
+
+/* ============ СОЗДАНИЕ ПОРОДЫ ============ */
+
+document.getElementById('btnCreate').addEventListener('click', () => {
+  if (selected.length === 0) {
+    showResult('fail', '🫙', 'Тигель пуст', 'Добавь хотя бы один минерал!', '');
+    updateCharacter('fail', 'Тигель пуст! Добавь минералы.');
+    clearDocument();
+    return;
+  }
+
+  const found = findRecipe(selected);
+  if (found) {
+    if (collected.has(found.rock)) {
+      showResult('already', found.icon, found.rock, 'Ты уже открывал эту породу!', found.type);
+      updateCharacter('already', 'Эта порода уже в твоей коллекции!');
+    } else {
+      collected.add(found.rock);
+      showResult('success', found.icon, '🎉 ' + found.rock, found.desc, found.type);
+      updateCharacter('success', `Открытие! Ты получил ${found.rock}!`);
+      updateProgress();
+    }
+    fillDocument(found);
+    $hintBox.classList.remove('show');
+  } else {
+    showResult('fail', '❓', 'Неизвестная смесь',
+      'Из такого набора порода не получается. Попробуй подсказку!', '');
+    updateCharacter('fail', 'Не получилось… попробуй другой набор.');
+    clearDocument();
+  }
+});
+
+function findRecipe(sel) {
+  const sorted = [...sel].sort();
+  for (const r of recipes) {
+    const need = [...r.needs].sort();
+    if (need.length === sorted.length && need.every((v, i) => v === sorted[i])) {
+      return r;
+    }
+  }
+  return null;
+}
+
+/* ============ ПЕРСОНАЖ ============ */
+
+function updateCharacter(state, text) {
+  $charBox.classList.remove('success', 'fail', 'already');
+  if (state === 'success') $charBox.classList.add('success');
+  if (state === 'fail')    $charBox.classList.add('fail');
+  if (state === 'already') $charBox.classList.add('already');
+  $charCaption.textContent = text;
+}
+
+/* ============ ДОКУМЕНТ ============ */
+
+function fillDocument(r) {
+  const recipeText = r.needs.map(id => minerals.find(m => m.id === id).name).join(' + ');
+  setDocField('docRock',    r.icon + ' ' + r.rock);
+  setDocField('docType',    r.type);
+  setDocField('docRecipe',  recipeText);
+  setDocField('docHard',    r.hardness || '—');
+  setDocField('docStreak',  r.streak || '—');
+  setDocField('docAcid',    r.acid || '—');
+  setDocField('docMag',     r.magnet || '—');
+}
+
+function clearDocument() {
+  ['docRock', 'docType', 'docRecipe', 'docHard', 'docStreak', 'docAcid', 'docMag']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      el.textContent = '—';
+      el.classList.add('empty-val');
+    });
+}
+
+function setDocField(id, value) {
+  const el = document.getElementById(id);
+  el.textContent = value;
+  el.classList.remove('empty-val');
+}
+
+/* ============ ПОДСКАЗКА ============ */
+
+document.getElementById('btnHint').addEventListener('click', () => {
+  if (selected.length === 0) {
+    const remaining = recipes.filter(r => !collected.has(r.rock));
+    if (remaining.length === 0) {
+      $hintText.innerHTML = '🏆 Ты открыл все породы! Молодец!';
+    } else {
+      const r = remaining[0];
+      const names = r.needs.map(id => minerals.find(m => m.id === id).name).join(' + ');
+      $hintText.innerHTML = `Попробуй собрать <b>${r.icon} ${r.rock}</b>:<br>нужно ${names}`;
+    }
+    $hintBox.classList.add('show');
+    return;
+  }
+
+  const suggestions = [];
+
+  recipes.forEach(r => {
+    if (collected.has(r.rock)) return;
+    const have = [...selected];
+    const need = [...r.needs];
+    let matched = 0;
+    need.forEach(n => {
+      const idx = have.indexOf(n);
+      if (idx !== -1) { have.splice(idx, 1); matched++; }
+    });
+    if (have.length === 0 && matched > 0) {
+      suggestions.push({ r, missing: need.length - matched, matched });
+    }
+  });
+
+  suggestions.sort((a, b) => a.missing - b.missing);
+
+  if (suggestions.length === 0) {
+    $hintText.innerHTML = '🤔 Этот набор ни к чему не подходит. Убери что-нибудь или добавь другой минерал.';
+  } else {
+    const best = suggestions[0];
+    if (best.missing === 0) {
+      $hintText.innerHTML = `🎯 Кажется, у тебя всё есть для <b>${best.r.icon} ${best.r.rock}</b>! Жми «Создать породу».`;
+    } else {
+      const haveNames = selected.map(id => minerals.find(m => m.id === id).name).join(', ');
+      const needLeft = [...best.r.needs];
+      selected.forEach(s => {
+        const i = needLeft.indexOf(s);
+        if (i !== -1) needLeft.splice(i, 1);
+      });
+      const missingNames = needLeft.map(id => minerals.find(m => m.id === id).name).join(' + ');
+      $hintText.innerHTML = `💡 У тебя уже есть <b>${haveNames}</b>.<br>Для <b>${best.r.icon} ${best.r.rock}</b> не хватает: <b>${missingNames}</b>.`;
+    }
+  }
+  $hintBox.classList.add('show');
+});
+
+/* ============ ВСЕ РЕЦЕПТЫ ============ */
+
+document.getElementById('btnRecipes').addEventListener('click', () => {
+  $rocksGrid.innerHTML = '';
+  recipes.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'rock-card' + (collected.has(r.rock) ? ' done' : '');
+    const needNames = r.needs
+      .map(id => minerals.find(m => m.id === id).name)
+      .join(' + ');
+    card.innerHTML = `
+      <div class="rc-title">${collected.has(r.rock) ? '✅' : '❓'} ${r.icon} ${r.rock}</div>
+      <div class="rc-type">${r.type}</div>
+      <div class="rc-recipe">${needNames}</div>
+    `;
+    $rocksGrid.appendChild(card);
+  });
+  $modalBg.classList.add('open');
+});
+
+document.getElementById('btnCloseModal').addEventListener('click', () => {
+  $modalBg.classList.remove('open');
+});
+$modalBg.addEventListener('click', e => {
+  if (e.target === $modalBg) $modalBg.classList.remove('open');
+});
+
+/* ============ ОЧИСТКА ============ */
+
+document.getElementById('btnClear').addEventListener('click', () => {
+  selected = [];
+  renderSlot();
+  $result.className = 'result empty';
+  $result.textContent = 'Здесь появится горная порода…';
+  $hintBox.classList.remove('show');
+  clearDocument();
+  updateCharacter('idle', 'Твой помощник-геолог ждёт открытий!');
+});
+
+/* ============ РЕЗУЛЬТАТ ============ */
+
+function showResult(type, icon, name, desc, rockType) {
+  $result.className = 'result ' + type;
+  const typeLabel = rockType ? `<div class="rock-type type-${rockType}">${rockType}</div>` : '';
+  $result.innerHTML = `
+    <div class="rock-icon">${icon}</div>
+    <div class="rock-name">${name}</div>
+    ${typeLabel}
+    <div class="rock-desc">${desc}</div>
+  `;
+}
+
+/* ============ ПРОГРЕСС ============ */
+
+function updateProgress() {
+  $score.textContent = collected.size;
+  $total.textContent = recipes.length;
+  $fill.style.width = (collected.size / recipes.length * 100) + '%';
+}
+
+/* ============ СТАРТ ============ */
+
+$total.textContent = recipes.length;
+updateProgress();
+renderSlot();
+</script>
+
+</body>
+</html>
